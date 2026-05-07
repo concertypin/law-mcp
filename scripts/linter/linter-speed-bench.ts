@@ -5,7 +5,6 @@
  * Don't have to be run on scripts or CI, but you can run it if you have lots of curiosity.
  */
 
-// oxlint-disable no-console
 import { spawnSync } from "child_process";
 import { performance } from "perf_hooks";
 

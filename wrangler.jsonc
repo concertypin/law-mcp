@@ -1,19 +1,11 @@
 {
     "$schema": "node_modules/wrangler/config-schema.json",
     "upload_source_maps": true,
-    "name": "template",
+    "name": "law_mcp",
     "compatibility_date": "2026-03-17",
     "main": "./src/index.ts",
     "send_metrics": false,
     "observability": {
         "enabled": true,
-    },
-    "vars": {
-        "AUTH_KEY": "test"
-    },
-    "env": {
-        "prod": {
-            "name": "",
-        },
     },
 }

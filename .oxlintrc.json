@@ -29,7 +29,8 @@
         }
     ],
     "rules": {
-        "@typescript-eslint/require-await": "off"
+        "@typescript-eslint/require-await": "off",
+        "eslint/no-console": "off"
     },
     "options": {
         "typeAware": true,
