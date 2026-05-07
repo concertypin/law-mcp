@@ -166,3 +166,4 @@ dist-ts
 
 worker-configuration.d.ts
 .wrangler
+.dev.vars
