@@ -9,7 +9,7 @@
         "enabled": true,
     },
     "vars": {
-        "AUTH_KEY": "test"
+        "AUTH_KEY": "test",
     },
     "env": {
         "prod": {

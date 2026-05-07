@@ -9,7 +9,7 @@ export interface LawSearchResponse {
     LawSearch: {
         law: LawSummaryData[];
         totalCnt: number;
-    }
+    };
 }
 
 export interface LawServiceResponse {
@@ -20,7 +20,7 @@ export interface LawServiceResponse {
         조문: {
             조문단위: ArticleData[];
         };
-    }
+    };
 }
 
 export interface ParagraphData {
@@ -37,22 +37,28 @@ export interface ArticleData {
     항?: ParagraphData | ParagraphData[];
 }
 
-export async function fetchLawSearch(query: string, authKey: string): Promise<LawSearchResponse> {
+export async function fetchLawSearch(
+    query: string,
+    authKey: string
+): Promise<LawSearchResponse> {
     const url = `https://www.law.go.kr/DRF/lawSearch.do?OC=${authKey}&target=law&type=JSON&query=${encodeURIComponent(query)}&display=10`;
     const res = await fetch(url);
     if (!res.ok) {
         throw new Error(`Failed to fetch law search: ${res.statusText}`);
     }
-    return res.json() as Promise<LawSearchResponse>;
+    return res.json();
 }
 
-export async function fetchLawService(mst: string, authKey: string): Promise<LawServiceResponse> {
+export async function fetchLawService(
+    mst: string,
+    authKey: string
+): Promise<LawServiceResponse> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
     const cache = (caches as any).default as Cache;
     const cacheKey = new Request(`https://law-cache/${mst}`);
     const cached = await cache.match(cacheKey);
     if (cached) {
-        return cached.json() as Promise<LawServiceResponse>;
+        return cached.json();
     }
 
     const url = `https://www.law.go.kr/DRF/lawService.do?OC=${authKey}&target=law&type=JSON&MST=${mst}`;
@@ -61,7 +67,7 @@ export async function fetchLawService(mst: string, authKey: string): Promise<Law
         throw new Error(`Failed to fetch law service: ${res.statusText}`);
     }
     const data = await res.json();
-    
+
     // Store in cache
     const responseToCache = new Response(JSON.stringify(data), {
         headers: {
@@ -78,7 +84,9 @@ export async function fetchLawService(mst: string, authKey: string): Promise<Law
     return data as LawServiceResponse;
 }
 
-export function normalizeParagraphs(paragraphs?: ParagraphData | ParagraphData[]): ParagraphData[] {
+export function normalizeParagraphs(
+    paragraphs?: ParagraphData | ParagraphData[]
+): ParagraphData[] {
     if (!paragraphs) return [];
     if (Array.isArray(paragraphs)) return paragraphs;
     return [paragraphs];
