@@ -14,6 +14,8 @@
 
 ```
 Base URL: https://www.law.go.kr/DRF
+
+Cloudflare Workers에서 `https://www.law.go.kr`로 직접 upstream fetch하면 law.go.kr의 TLS renegotiation 때문에 525가 발생할 수 있어, HTTPS를 먼저 시도하고 retryable failure면 HTTP endpoint로 fallback한다.
 검색: GET /lawSearch.do?OC={API_KEY}&target=law&type=JSON&query={encoded}&display={n}&page={n}
 본문: GET /lawService.do?OC={API_KEY}&target=law&type=JSON&MST={법령일련번호}
 ```

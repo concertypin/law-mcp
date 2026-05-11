@@ -41,6 +41,7 @@ tests/
 ## Key Details
 
 - API: `https://www.law.go.kr/DRF/lawSearch.do`, `/lawService.do`
+- Cloudflare Workers에서 `https://www.law.go.kr` upstream fetch 시 TLS renegotiation 때문에 525가 날 수 있어, HTTPS를 먼저 시도하고 retryable failure면 HTTP endpoint로 fallback한다.
 - OC 값: `API_KEY` 환경변수 — `wrangler.jsonc` binding
 - `항` 필드 normalize: `object | object[]` → 항상 `[]`
 - `조문가지번호`: `"312의2"` → `조문번호: "312"`, `조문가지번호: "2"`

@@ -2,6 +2,8 @@
 
 한국 법령 검색 MCP 서버. law.go.kr API 사용.
 
+Cloudflare Workers에서는 law.go.kr HTTPS upstream에서 525가 발생할 수 있어 DRF 호출은 HTTPS를 먼저 시도하고 retryable failure면 HTTP endpoint로 fallback한다.
+
 ## MCP Tools
 
 | Tool            | 설명                                         |
