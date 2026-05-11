@@ -32,11 +32,11 @@ tests/
 
 ## MCP Tools
 
-| Tool | Input | Output |
-|---|---|---|
-| `search_laws` | `query` | id, name, type, ministry, description |
-| `list_articles` | `law_id` | article_no, title, has_paragraphs |
-| `get_article` | `law_id`, `article_no`, `paragraph_no?` | law_name, title, text |
+| Tool            | Input                                   | Output                                |
+| --------------- | --------------------------------------- | ------------------------------------- |
+| `search_laws`   | `query`                                 | id, name, type, ministry, description |
+| `list_articles` | `law_id`                                | article_no, title, has_paragraphs     |
+| `get_article`   | `law_id`, `article_no`, `paragraph_no?` | law_name, title, text                 |
 
 ## Key Details
 
@@ -51,14 +51,15 @@ tests/
 `src/route.ts`에 정의 — input/output 모두 `.parse()` 통과.
 
 ```ts
-SearchLawsInput, SearchLawsOutput
-ListArticlesInput, ListArticlesOutput
-GetArticleInput, GetArticleOutput
+(SearchLawsInput, SearchLawsOutput);
+(ListArticlesInput, ListArticlesOutput);
+(GetArticleInput, GetArticleOutput);
 ```
 
 ## Testing
 
 `tests/unit/law.test.ts`:
+
 - fetchLawSearch, fetchLawService mock
 - 항 normalize edge case
 - schema validation

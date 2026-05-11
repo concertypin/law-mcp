@@ -19,6 +19,7 @@ Base URL: https://www.law.go.kr/DRF
 ```
 
 **주의사항**
+
 - `query`는 반드시 `encodeURIComponent()` 적용
 - 본문 응답은 법령 전체를 한 번에 내려줌 (민법 기준 조문 1337개)
 - `항` 필드는 조문에 따라 `object` 또는 `object[]`로 타입이 불규칙함 → 항상 배열로 normalize 필요
@@ -33,27 +34,30 @@ Base URL: https://www.law.go.kr/DRF
 법령 이름으로 검색. 법령명과 목적(제1조)만 반환.
 
 **Input**
+
 ```ts
 {
-  query: string  // 검색어 (예: "민법", "개인정보")
+    query: string; // 검색어 (예: "민법", "개인정보")
 }
 ```
 
 **Output**
+
 ```ts
 {
-  results: Array<{
-    id: string            // 법령일련번호 (MST) — 다른 툴 호출에 사용
-    name: string          // 법령명한글
-    type: string          // 법령구분명 (법률 / 대통령령 / 부령 등)
-    ministry: string      // 소관부처명
-    description?: string  // 제1조 텍스트. 제목이 "목적"인 경우에만 포함, 아니면 필드 없음
-  }>
-  total: number
+    results: Array<{
+        id: string; // 법령일련번호 (MST) — 다른 툴 호출에 사용
+        name: string; // 법령명한글
+        type: string; // 법령구분명 (법률 / 대통령령 / 부령 등)
+        ministry: string; // 소관부처명
+        description?: string; // 제1조 텍스트. 제목이 "목적"인 경우에만 포함, 아니면 필드 없음
+    }>;
+    total: number;
 }
 ```
 
 **구현 흐름**
+
 1. `lawSearch.do` 호출 (display=10)
 2. 결과 법령마다 `lawService.do` 병렬 호출하여 조문 fetch
 3. 조문단위 중 `조문번호 === "1"` && `조문여부 === "조문"` 인 것 탐색
@@ -69,25 +73,28 @@ Base URL: https://www.law.go.kr/DRF
 특정 법령의 조문 목록을 반환. 조문번호와 제목만.
 
 **Input**
+
 ```ts
 {
-  law_id: string   // search_laws에서 받은 id (법령일련번호)
+    law_id: string; // search_laws에서 받은 id (법령일련번호)
 }
 ```
 
 **Output**
+
 ```ts
 {
-  law_name: string
-  articles: Array<{
-    article_no: string   // "1", "2", "312의2" (가지번호 있으면 합성)
-    title: string        // 조문제목 (없으면 빈 문자열)
-    has_paragraphs: boolean  // 항이 1개 이상인지
-  }>
+    law_name: string;
+    articles: Array<{
+        article_no: string; // "1", "2", "312의2" (가지번호 있으면 합성)
+        title: string; // 조문제목 (없으면 빈 문자열)
+        has_paragraphs: boolean; // 항이 1개 이상인지
+    }>;
 }
 ```
 
 **구현 흐름**
+
 1. `lawService.do` 호출
 2. `조문단위` 배열 중 `조문여부 === "조문"`만 필터
 3. `조문번호` + `조문가지번호` 합성: 가지번호 있으면 `"${조문번호}의${조문가지번호}"`, 없으면 `조문번호` 그대로
@@ -100,6 +107,7 @@ Base URL: https://www.law.go.kr/DRF
 특정 조문의 본문을 반환.
 
 **Input**
+
 ```ts
 {
   law_id: string       // 법령일련번호
@@ -109,16 +117,18 @@ Base URL: https://www.law.go.kr/DRF
 ```
 
 **Output**
+
 ```ts
 {
-  law_name: string
-  article_no: string
-  title: string
-  text: string   // 요청한 조문(+항) 전체 텍스트. 항 지정 시 해당 항만.
+    law_name: string;
+    article_no: string;
+    title: string;
+    text: string; // 요청한 조문(+항) 전체 텍스트. 항 지정 시 해당 항만.
 }
 ```
 
 **구현 흐름**
+
 1. `lawService.do` 호출 (전체 법령 fetch)
 2. `article_no` 파싱: `"312의2"` → `{ no: "312", sub: "2" }`, `"1"` → `{ no: "1", sub: undefined }`
 3. 해당 조문 탐색: `조문번호 === no && 조문가지번호 === sub` (sub 없으면 가지번호 없는 것)
@@ -136,51 +146,81 @@ Base URL: https://www.law.go.kr/DRF
 ```ts
 // search_laws
 const SearchLawsInput = z.object({
-  query: z.string().describe("검색할 법령 이름 또는 키워드. 예: '민법', '개인정보보호'"),
-})
+    query: z
+        .string()
+        .describe("검색할 법령 이름 또는 키워드. 예: '민법', '개인정보보호'"),
+});
 
 const LawSummary = z.object({
-  id: z.string().describe("법령일련번호(MST). list_articles / get_article 호출 시 사용"),
-  name: z.string().describe("법령명 한글"),
-  type: z.string().describe("법령 종류. 예: '법률', '대통령령', '부령'"),
-  ministry: z.string().describe("소관 부처명"),
-  description: z.string().optional().describe("제1조 목적 조문 전문. 제1조 제목이 '목적'인 경우에만 포함됨"),
-})
+    id: z
+        .string()
+        .describe(
+            "법령일련번호(MST). list_articles / get_article 호출 시 사용"
+        ),
+    name: z.string().describe("법령명 한글"),
+    type: z.string().describe("법령 종류. 예: '법률', '대통령령', '부령'"),
+    ministry: z.string().describe("소관 부처명"),
+    description: z
+        .string()
+        .optional()
+        .describe(
+            "제1조 목적 조문 전문. 제1조 제목이 '목적'인 경우에만 포함됨"
+        ),
+});
 
 const SearchLawsOutput = z.object({
-  results: z.array(LawSummary).describe("검색 결과 목록. 최대 10건"),
-  total: z.number().describe("전체 검색 결과 수"),
-})
+    results: z.array(LawSummary).describe("검색 결과 목록. 최대 10건"),
+    total: z.number().describe("전체 검색 결과 수"),
+});
 
 // list_articles
 const ListArticlesInput = z.object({
-  law_id: z.string().describe("법령일련번호(MST). search_laws 결과의 id 필드"),
-})
+    law_id: z
+        .string()
+        .describe("법령일련번호(MST). search_laws 결과의 id 필드"),
+});
 
 const ArticleSummary = z.object({
-  article_no: z.string().describe("조문 번호. 가지조문 포함 시 '의'로 표기. 예: '1', '312의2'"),
-  title: z.string().describe("조문 제목. 예: '목적', '정의'. 제목 없는 조문은 빈 문자열"),
-  has_paragraphs: z.boolean().describe("항(①②③...)이 1개 이상 존재하면 true"),
-})
+    article_no: z
+        .string()
+        .describe("조문 번호. 가지조문 포함 시 '의'로 표기. 예: '1', '312의2'"),
+    title: z
+        .string()
+        .describe("조문 제목. 예: '목적', '정의'. 제목 없는 조문은 빈 문자열"),
+    has_paragraphs: z.boolean().describe("항(①②③...)이 1개 이상 존재하면 true"),
+});
 
 const ListArticlesOutput = z.object({
-  law_name: z.string().describe("법령명 한글"),
-  articles: z.array(ArticleSummary).describe("조문 목록. 본문 텍스트는 포함하지 않음"),
-})
+    law_name: z.string().describe("법령명 한글"),
+    articles: z
+        .array(ArticleSummary)
+        .describe("조문 목록. 본문 텍스트는 포함하지 않음"),
+});
 
 // get_article
 const GetArticleInput = z.object({
-  law_id: z.string().describe("법령일련번호(MST). search_laws 결과의 id 필드"),
-  article_no: z.string().describe("조문 번호. list_articles 결과의 article_no 필드. 예: '1', '312의2'"),
-  paragraph_no: z.string().optional().describe("항 번호. 예: '①', '②'. 생략하면 조문 전체 반환"),
-})
+    law_id: z
+        .string()
+        .describe("법령일련번호(MST). search_laws 결과의 id 필드"),
+    article_no: z
+        .string()
+        .describe(
+            "조문 번호. list_articles 결과의 article_no 필드. 예: '1', '312의2'"
+        ),
+    paragraph_no: z
+        .string()
+        .optional()
+        .describe("항 번호. 예: '①', '②'. 생략하면 조문 전체 반환"),
+});
 
 const GetArticleOutput = z.object({
-  law_name: z.string().describe("법령명 한글"),
-  article_no: z.string().describe("조문 번호"),
-  title: z.string().describe("조문 제목. 없으면 빈 문자열"),
-  text: z.string().describe("조문 본문 전체. paragraph_no 지정 시 해당 항 텍스트만"),
-})
+    law_name: z.string().describe("법령명 한글"),
+    article_no: z.string().describe("조문 번호"),
+    title: z.string().describe("조문 제목. 없으면 빈 문자열"),
+    text: z
+        .string()
+        .describe("조문 본문 전체. paragraph_no 지정 시 해당 항 텍스트만"),
+});
 ```
 
 ---
@@ -191,17 +231,17 @@ const GetArticleOutput = z.object({
 TTL: 24시간 (`Cache-Control: max-age=86400`)
 
 ```ts
-const cache = caches.default
-const cacheKey = new Request(`https://law-cache/${mst}`)
-const cached = await cache.match(cacheKey)
-if (cached) return cached.json()
+const cache = caches.default;
+const cacheKey = new Request(`https://law-cache/${mst}`);
+const cached = await cache.match(cacheKey);
+if (cached) return cached.json();
 
-const data = await fetchFromApi(mst)
+const data = await fetchFromApi(mst);
 const res = new Response(JSON.stringify(data), {
-  headers: { 'Cache-Control': 'max-age=86400' },
-})
-await cache.put(cacheKey, res)
-return data
+    headers: { "Cache-Control": "max-age=86400" },
+});
+await cache.put(cacheKey, res);
+return data;
 ```
 
 ---
