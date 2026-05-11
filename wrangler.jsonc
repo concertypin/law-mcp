@@ -1,7 +1,7 @@
 {
     "$schema": "node_modules/wrangler/config-schema.json",
     "upload_source_maps": true,
-    "name": "law_mcp",
+    "name": "law-mcp",
     "compatibility_date": "2026-03-17",
     "main": "./src/index.ts",
     "send_metrics": false,

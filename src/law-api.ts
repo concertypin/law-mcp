@@ -63,7 +63,7 @@ export async function fetchLawSearch(
         "[fetchLawSearch] response keys:",
         Object.keys(data as Record<string, unknown>)
     );
-    return data as Promise<LawSearchResponse>;
+    return data as LawSearchResponse;
 }
 
 export async function fetchLawService(
