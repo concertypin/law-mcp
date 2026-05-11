@@ -24,7 +24,7 @@ const app = createApp({
 
 // Mock globals safely
 const mockCacheMatch = vi.fn();
-const mockCachePut = vi.fn();
+const mockCachePut = vi.fn<() => Promise<void>>();
 const mockCaches = {
     default: {
         match: mockCacheMatch,

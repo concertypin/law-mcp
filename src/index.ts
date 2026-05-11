@@ -34,6 +34,9 @@ const app = new Hono<HonoEnv>()
         return next();
     })
     .all("/mcp", async (c) => {
+        if (c.env.AUTH_KEY === undefined) {
+            return c.text("Server misconfiguration: AUTH_KEY is not set", 500);
+        }
         const mcpServer = createApp(c.env);
         if (!mcpServer.isConnected()) {
             // Connect the mcp with the transport
