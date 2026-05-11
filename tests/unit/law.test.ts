@@ -13,13 +13,14 @@ import {
     fetchLawSearch,
     fetchLawService,
 } from "@/law-api";
-import { app } from "@/route";
+import { createApp } from "@/route";
 import type { MockedFunction } from "vitest";
 import lawCasesRaw from "../fixtures/law-cases.md?raw";
-
 const authKey = "test";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-(globalThis as any).AUTH_KEY = authKey;
+
+const app = createApp({
+    AUTH_KEY: authKey,
+});
 
 // Mock globals safely
 const mockCacheMatch = vi.fn();
@@ -45,7 +46,7 @@ const minimumLawFixtureCases = 30;
 
 describe("Law API", () => {
     beforeEach(() => {
-        global.fetch = vi.fn();
+        global.fetch = vi.fn<typeof fetch>();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
         (global as any).caches = mockCaches;
         mockCacheMatch.mockResolvedValue(null);
@@ -96,7 +97,7 @@ describe("Law API", () => {
 
 describe("MCP Tools", () => {
     beforeEach(() => {
-        global.fetch = vi.fn();
+        global.fetch = vi.fn<typeof fetch>();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
         (global as any).caches = mockCaches;
         mockCacheMatch.mockResolvedValue(null);
@@ -297,7 +298,7 @@ describe("MCP Tools - expanded law fixtures", () => {
         originalFetch = global.fetch;
         originalCaches = globalWithCaches.caches;
 
-        global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+        global.fetch = vi.fn<typeof fetch>(async (input: RequestInfo | URL) => {
             const requestUrl =
                 typeof input === "string"
                     ? input
