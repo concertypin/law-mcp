@@ -37,33 +37,101 @@ export interface ArticleData {
     항?: ParagraphData | ParagraphData[];
 }
 
+const UPSTREAM_RETRY_LIMIT = 3;
+
+class UpstreamError extends Error {
+    retryable: boolean;
+
+    constructor(message: string, retryable: boolean) {
+        super(message);
+        this.retryable = retryable;
+    }
+}
+
+function formatHttpError(label: string, res: Response, body: string): string {
+    const statusText = res.statusText ? ` ${res.statusText}` : "";
+    const bodyText = body.trim().slice(0, 300);
+
+    return [
+        `${label} 실패 (${res.status}${statusText})`,
+        bodyText ? bodyText : undefined,
+    ]
+        .filter(Boolean)
+        .join(": ");
+}
+
+function shouldRetryHttpStatus(status: number): boolean {
+    return status >= 500;
+}
+
+async function fetchJsonWithRetry<T>(label: string, url: string): Promise<T> {
+    let lastError: unknown;
+
+    for (let attempt = 1; attempt <= UPSTREAM_RETRY_LIMIT; attempt += 1) {
+        try {
+            const res = await fetch(url);
+            console.log(
+                `[${label}] status:`,
+                res.status,
+                res.statusText,
+                "ok:",
+                res.ok
+            );
+
+            if (!res.ok) {
+                const text = await res.text();
+                console.log(`[${label}] error response:`, text.slice(0, 500));
+                const error = new UpstreamError(
+                    formatHttpError(label, res, text),
+                    shouldRetryHttpStatus(res.status)
+                );
+
+                if (error.retryable && attempt < UPSTREAM_RETRY_LIMIT) {
+                    lastError = error;
+                    continue;
+                }
+
+                throw error;
+            }
+
+            const data = await res.json();
+            console.log(
+                `[${label}] response keys:`,
+                Object.keys(data as Record<string, unknown>)
+            );
+            return data as T;
+        } catch (err) {
+            lastError = err;
+            if (err instanceof UpstreamError && !err.retryable) {
+                throw err;
+            }
+
+            if (attempt < UPSTREAM_RETRY_LIMIT) {
+                console.warn(
+                    `[${label}] retry ${attempt}/${UPSTREAM_RETRY_LIMIT} after error:`,
+                    err
+                );
+                continue;
+            }
+            throw err;
+        }
+    }
+
+    throw lastError instanceof Error
+        ? lastError
+        : new Error(`${label} 요청에 실패했습니다.`);
+}
+
 export async function fetchLawSearch(
     query: string,
     authKey: string
 ): Promise<LawSearchResponse> {
     const url = `https://www.law.go.kr/DRF/lawSearch.do?OC=${authKey}&target=law&type=JSON&query=${encodeURIComponent(query)}&display=10`;
-    console.log("[fetchLawSearch] URL:", url);
-    const res = await fetch(url);
     console.log(
-        "[fetchLawSearch] status:",
-        res.status,
-        res.statusText,
-        "ok:",
-        res.ok
+        "[fetchLawSearch] URL:",
+        url.replace(authKey, "****authKey****")
     );
-    if (!res.ok) {
-        const text = await res.text();
-        console.log("[fetchLawSearch] error response:", text.slice(0, 500));
-        throw new Error(
-            `Failed to fetch law search: ${res.statusText || res.status}`
-        );
-    }
-    const data = await res.json();
-    console.log(
-        "[fetchLawSearch] response keys:",
-        Object.keys(data as Record<string, unknown>)
-    );
-    return data as LawSearchResponse;
+    return fetchJsonWithRetry<LawSearchResponse>("fetchLawSearch", url);
 }
 
 export async function fetchLawService(
@@ -80,41 +148,26 @@ export async function fetchLawService(
     }
 
     const url = `https://www.law.go.kr/DRF/lawService.do?OC=${authKey}&target=law&type=JSON&MST=${mst}`;
-    console.log("[fetchLawService] URL:", url);
-    const res = await fetch(url);
     console.log(
-        "[fetchLawService] status:",
-        res.status,
-        res.statusText,
-        "ok:",
-        res.ok
+        "[fetchLawService] URL:",
+        url.replace(authKey, "****authKey****")
     );
-    if (!res.ok) {
-        const text = await res.text();
-        console.log("[fetchLawService] error response:", text.slice(0, 500));
-        throw new Error(
-            `Failed to fetch law service: ${res.statusText || res.status}`
-        );
-    }
-    const data = await res.json();
-    console.log(
-        "[fetchLawService] response keys:",
-        Object.keys(data as Record<string, unknown>)
+    const data = await fetchJsonWithRetry<LawServiceResponse>(
+        "fetchLawService",
+        url
     );
 
-    // Store in cache
     const responseToCache = new Response(JSON.stringify(data), {
         headers: {
             "Content-Type": "application/json",
             "Cache-Control": "max-age=86400",
         },
     });
-    // Fire and forget caching
     cache.put(cacheKey, responseToCache).catch((err: unknown) => {
         console.error("Cache put error:", err);
     });
 
-    return data as LawServiceResponse;
+    return data;
 }
 
 export function normalizeParagraphs(

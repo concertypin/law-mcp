@@ -1,1 +1,0 @@
-pnpx @modelcontextprotocol/inspector --cli "http://localhost:5173/mcp" --transport http --method tools/call --tool-name search_laws --tool-arg query=형법

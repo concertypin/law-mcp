@@ -1,13 +1,6 @@
 {
     "$schema": "./node_modules/oxlint/configuration_schema.json",
-    "plugins": [
-        "typescript",
-        "unicorn",
-        "import",
-        "vitest",
-        "promise",
-        "eslint"
-    ],
+    "plugins": ["typescript", "unicorn", "import", "vitest", "promise"],
     "env": {
         "builtin": true
     },
@@ -29,8 +22,7 @@
         }
     ],
     "rules": {
-        "@typescript-eslint/require-await": "off",
-        "eslint/no-console": "off"
+        "@typescript-eslint/require-await": "off"
     },
     "options": {
         "typeAware": true,
