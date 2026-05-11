@@ -37,9 +37,14 @@ export interface ArticleData {
     항?: ParagraphData | ParagraphData[];
 }
 
-const UPSTREAM_RETRY_LIMIT = 3;
+const HTTP_FALLBACK_RETRY_LIMIT = 3;
 const LAW_API_HTTPS_BASE_URL = "https://www.law.go.kr/DRF";
 const LAW_API_HTTP_BASE_URL = "http://www.law.go.kr/DRF";
+
+type UpstreamEndpoint = {
+    url: string;
+    maxAttempts: number;
+};
 
 class UpstreamError extends Error {
     retryable: boolean;
@@ -76,14 +81,14 @@ function shouldFallbackToHttp(err: unknown): boolean {
 
 async function fetchJsonWithRetry<T>(
     label: string,
-    urls: readonly string[]
+    endpoints: readonly UpstreamEndpoint[]
 ): Promise<T> {
     let lastError: unknown;
 
-    for (const [urlIndex, url] of urls.entries()) {
-        for (let attempt = 1; attempt <= UPSTREAM_RETRY_LIMIT; attempt += 1) {
+    for (const [endpointIndex, endpoint] of endpoints.entries()) {
+        for (let attempt = 1; attempt <= endpoint.maxAttempts; attempt += 1) {
             try {
-                const res = await fetch(url);
+                const res = await fetch(endpoint.url);
                 console.log(
                     `[${label}] status:`,
                     res.status,
@@ -103,7 +108,7 @@ async function fetchJsonWithRetry<T>(
                         shouldRetryHttpStatus(res.status)
                     );
 
-                    if (error.retryable && attempt < UPSTREAM_RETRY_LIMIT) {
+                    if (error.retryable && attempt < endpoint.maxAttempts) {
                         lastError = error;
                         continue;
                     }
@@ -123,15 +128,18 @@ async function fetchJsonWithRetry<T>(
                     throw err;
                 }
 
-                if (attempt < UPSTREAM_RETRY_LIMIT) {
+                if (attempt < endpoint.maxAttempts) {
                     console.warn(
-                        `[${label}] retry ${attempt}/${UPSTREAM_RETRY_LIMIT} after error:`,
+                        `[${label}] retry ${attempt}/${endpoint.maxAttempts} after error:`,
                         err
                     );
                     continue;
                 }
 
-                if (urlIndex < urls.length - 1 && shouldFallbackToHttp(err)) {
+                if (
+                    endpointIndex < endpoints.length - 1 &&
+                    shouldFallbackToHttp(err)
+                ) {
                     console.warn(
                         `[${label}] HTTPS upstream failed; falling back to HTTP:`,
                         err
@@ -155,12 +163,18 @@ export async function fetchLawSearch(
 ): Promise<LawSearchResponse> {
     const path = `/lawSearch.do?OC=${apiKey}&target=law&type=JSON&query=${encodeURIComponent(query)}&display=10`;
     const primaryUrl = `${LAW_API_HTTPS_BASE_URL}${path}`;
-    const urls = [primaryUrl, `${LAW_API_HTTP_BASE_URL}${path}`] as const;
+    const endpoints = [
+        { url: primaryUrl, maxAttempts: 1 },
+        {
+            url: `${LAW_API_HTTP_BASE_URL}${path}`,
+            maxAttempts: HTTP_FALLBACK_RETRY_LIMIT,
+        },
+    ] as const;
     console.log(
         "[fetchLawSearch] URL:",
         primaryUrl.replace(apiKey, "****apiKey****")
     );
-    return fetchJsonWithRetry<LawSearchResponse>("fetchLawSearch", urls);
+    return fetchJsonWithRetry<LawSearchResponse>("fetchLawSearch", endpoints);
 }
 
 export async function fetchLawService(
@@ -178,14 +192,20 @@ export async function fetchLawService(
 
     const path = `/lawService.do?OC=${apiKey}&target=law&type=JSON&MST=${mst}`;
     const primaryUrl = `${LAW_API_HTTPS_BASE_URL}${path}`;
-    const urls = [primaryUrl, `${LAW_API_HTTP_BASE_URL}${path}`] as const;
+    const endpoints = [
+        { url: primaryUrl, maxAttempts: 1 },
+        {
+            url: `${LAW_API_HTTP_BASE_URL}${path}`,
+            maxAttempts: HTTP_FALLBACK_RETRY_LIMIT,
+        },
+    ] as const;
     console.log(
         "[fetchLawService] URL:",
         primaryUrl.replace(apiKey, "****apiKey****")
     );
     const data = await fetchJsonWithRetry<LawServiceResponse>(
         "fetchLawService",
-        urls
+        endpoints
     );
 
     const responseToCache = new Response(JSON.stringify(data), {
