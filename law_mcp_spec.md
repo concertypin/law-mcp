@@ -6,7 +6,7 @@
 
 - **템플릿**: `git clone https://github.com/templecon/template-mcp-ts`
 - **런타임**: Cloudflare Workers
-- **환경변수**: `AUTH_KEY` — open.law.go.kr OC 값
+- **환경변수**: `API_KEY` — open.law.go.kr OC 값
 
 ---
 
@@ -14,8 +14,8 @@
 
 ```
 Base URL: https://www.law.go.kr/DRF
-검색: GET /lawSearch.do?OC={AUTH_KEY}&target=law&type=JSON&query={encoded}&display={n}&page={n}
-본문: GET /lawService.do?OC={AUTH_KEY}&target=law&type=JSON&MST={법령일련번호}
+검색: GET /lawSearch.do?OC={API_KEY}&target=law&type=JSON&query={encoded}&display={n}&page={n}
+본문: GET /lawService.do?OC={API_KEY}&target=law&type=JSON&MST={법령일련번호}
 ```
 
 **주의사항**

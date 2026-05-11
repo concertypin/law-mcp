@@ -25,12 +25,12 @@ get_article(id, "312", "①") → 제312조 제1항만
 src/
   law-api.ts    # lawSearch.do / lawService.do API + Cloudflare caching
   route.ts      # MCP tool 정의 (Zod schema)
-  index.ts      # Hono 서버 + globalThis.AUTH_KEY
+  index.ts      # Hono 서버
 ```
 
 ## 환경변수
 
-- `AUTH_KEY` — law.go.kr OC 값 (open.law.go.kr에서 발급)
+- `API_KEY` — law.go.kr OC 값 (open.law.go.kr에서 발급)
 
 ## 실행
 

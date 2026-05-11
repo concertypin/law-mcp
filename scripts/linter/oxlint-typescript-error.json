@@ -1,4 +1,4 @@
-// Base rule, which is similar to ESLint. Machine-generated, unrecommended to edit manually.
+// Base rule bundle. Machine-generated, unrecommended to edit manually.
 // Instead, extend this in .oxlintrc.json and override rules.
 {
     "$schema": "../../node_modules/oxlint/configuration_schema.json",

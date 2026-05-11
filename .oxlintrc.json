@@ -1,13 +1,6 @@
 {
     "$schema": "./node_modules/oxlint/configuration_schema.json",
-    "plugins": [
-        "typescript",
-        "unicorn",
-        "import",
-        "vitest",
-        "promise",
-        "eslint"
-    ],
+    "plugins": ["typescript", "unicorn", "import", "vitest", "promise"],
     "env": {
         "builtin": true
     },
@@ -36,5 +29,5 @@
         "typeCheck": true,
         "reportUnusedDisableDirectives": "error"
     },
-    "extends": ["scripts/linter/oxlint-eslint.json"]
+    "extends": ["scripts/linter/oxlint-typescript.json"]
 }

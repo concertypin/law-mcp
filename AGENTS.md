@@ -22,7 +22,7 @@ pnpm test     # Vitest
 src/
   law-api.ts    # lawSearch.do / lawService.do 호출 + caching
   route.ts      # MCP tools — search_laws, list_articles, get_article
-  index.ts      # Hono 서버 — globalThis.AUTH_KEY 설정
+  index.ts      # Hono 서버 — globalThis.API_KEY 설정
 tests/
   unit/
     law.test.ts # API mock + Zod schema 테스트
@@ -41,7 +41,7 @@ tests/
 ## Key Details
 
 - API: `https://www.law.go.kr/DRF/lawSearch.do`, `/lawService.do`
-- OC 값: `AUTH_KEY` 환경변수 — `wrangler.jsonc` binding
+- OC 값: `API_KEY` 환경변수 — `wrangler.jsonc` binding
 - `항` 필드 normalize: `object | object[]` → 항상 `[]`
 - `조문가지번호`: `"312의2"` → `조문번호: "312"`, `조문가지번호: "2"`
 - Cache API: `caches.default` — TTL 24h

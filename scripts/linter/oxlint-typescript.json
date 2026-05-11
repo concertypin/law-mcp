@@ -1,0 +1,7 @@
+{
+    "$schema": "../../node_modules/oxlint/configuration_schema.json",
+    "extends": [
+        "./oxlint-typescript-error.json",
+        "./oxlint-typescript-warn.json"
+    ]
+}

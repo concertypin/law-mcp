@@ -13,17 +13,19 @@ import {
     fetchLawSearch,
     fetchLawService,
 } from "@/law-api";
-import { app } from "@/route";
+import { createApp } from "@/route";
 import type { MockedFunction } from "vitest";
 import lawCasesRaw from "../fixtures/law-cases.md?raw";
+const apiKey = "test";
 
-const authKey = "test";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-(globalThis as any).AUTH_KEY = authKey;
+const app = createApp({
+    API_KEY: apiKey,
+});
 
 // Mock globals safely
-const mockCacheMatch = vi.fn();
-const mockCachePut = vi.fn();
+const mockCacheMatch =
+    vi.fn<() => Promise<{ json: () => Promise<unknown> } | null>>();
+const mockCachePut = vi.fn<() => Promise<void>>();
 const mockCaches = {
     default: {
         match: mockCacheMatch,
@@ -45,7 +47,7 @@ const minimumLawFixtureCases = 30;
 
 describe("Law API", () => {
     beforeEach(() => {
-        global.fetch = vi.fn();
+        global.fetch = vi.fn<typeof fetch>();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
         (global as any).caches = mockCaches;
         mockCacheMatch.mockResolvedValue(null);
@@ -82,8 +84,40 @@ describe("Law API", () => {
         );
     });
 
+    it("fetchLawSearch retries upstream failures up to three attempts", async () => {
+        const mockData = {
+            LawSearch: {
+                totalCnt: 1,
+                law: [{ 법령일련번호: "123", 법령명한글: "민법" }],
+            },
+        };
+
+        (global.fetch as MockedFunction<typeof fetch>)
+            .mockResolvedValueOnce({
+                ok: false,
+                status: 503,
+                statusText: "Service Unavailable",
+                text: async () => "upstream unavailable",
+            } as unknown as Response)
+            .mockResolvedValueOnce({
+                ok: false,
+                status: 503,
+                statusText: "Service Unavailable",
+                text: async () => "upstream unavailable",
+            } as unknown as Response)
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => mockData,
+            } as unknown as Response);
+
+        const result = await fetchLawSearch("민법", "test");
+
+        expect(result).toEqual(mockData);
+        expect(global.fetch).toHaveBeenCalledTimes(3);
+    });
+
     it("fetchLawService uses cache if available", async () => {
-        const mockData = { Law: { 조문: { 조문단위: [] } } };
+        const mockData = { 법령: { 조문: { 조문단위: [] } } };
         mockCacheMatch.mockResolvedValueOnce({
             json: async () => mockData,
         });
@@ -96,7 +130,7 @@ describe("Law API", () => {
 
 describe("MCP Tools", () => {
     beforeEach(() => {
-        global.fetch = vi.fn();
+        global.fetch = vi.fn<typeof fetch>();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
         (global as any).caches = mockCaches;
         mockCacheMatch.mockResolvedValue(null);
@@ -122,7 +156,7 @@ describe("MCP Tools", () => {
             },
         };
         const serviceMockData = {
-            Law: {
+            법령: {
                 조문: {
                     조문단위: [
                         {
@@ -192,10 +226,87 @@ describe("MCP Tools", () => {
         expect(content.results.length).toBe(0);
     });
 
+    it("search_laws ranks exact title matches first", async () => {
+        const searchMockData = {
+            LawSearch: {
+                totalCnt: 3,
+                law: [
+                    {
+                        법령일련번호: "123",
+                        법령명한글:
+                            "군에서의 형의 집행 및 군수용자의 처우에 관한 법률",
+                        법령구분명: "법률",
+                        소관부처명: "국방부",
+                    },
+                    {
+                        법령일련번호: "124",
+                        법령명한글: "형법",
+                        법령구분명: "법률",
+                        소관부처명: "법무부",
+                    },
+                    {
+                        법령일련번호: "125",
+                        법령명한글: "형사소송법",
+                        법령구분명: "법률",
+                        소관부처명: "법무부",
+                    },
+                ],
+            },
+        };
+        const serviceMockData = {
+            법령: {
+                조문: {
+                    조문단위: [
+                        {
+                            조문번호: "1",
+                            조문여부: "조문",
+                            조문제목: "목적",
+                            조문내용: "이 법은...",
+                            항: [],
+                        },
+                    ],
+                },
+            },
+        };
+
+        (global.fetch as MockedFunction<typeof fetch>)
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => searchMockData,
+            } as unknown as Response)
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => serviceMockData,
+            } as unknown as Response)
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => serviceMockData,
+            } as unknown as Response)
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => serviceMockData,
+            } as unknown as Response);
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+        const toolParams = (app as any)._registeredTools["search_laws"];
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
+        const result = await toolParams.handler(
+            { query: "형법" },
+            { signals: [] }
+        );
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        expect(result.isError).toBe(false);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+        const content = result.structuredContent;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        expect(content.results[0].name).toBe("형법");
+    });
+
     it("list_articles works correctly", async () => {
         const serviceMockData = {
-            Law: {
-                기본정보: { 법령명한글: "민법" },
+            법령: {
+                기본정보: { 법령명_한글: "민법" },
                 조문: {
                     조문단위: [
                         {
@@ -249,8 +360,8 @@ describe("MCP Tools", () => {
 
     it("get_article works correctly", async () => {
         const serviceMockData = {
-            Law: {
-                기본정보: { 법령명한글: "민법" },
+            법령: {
+                기본정보: { 법령명_한글: "민법" },
                 조문: {
                     조문단위: [
                         {
@@ -286,6 +397,46 @@ describe("MCP Tools", () => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         expect(content.text).toBe("조문내용입니다\ntest");
     });
+
+    it("get_article returns a friendly error response when article is missing", async () => {
+        const serviceMockData = {
+            법령: {
+                기본정보: { 법령명_한글: "민법" },
+                조문: {
+                    조문단위: [],
+                },
+            },
+        };
+
+        (global.fetch as MockedFunction<typeof fetch>).mockResolvedValueOnce({
+            ok: true,
+            json: async () => serviceMockData,
+        } as unknown as Response);
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+        const toolParams = (app as any)._registeredTools["get_article"];
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
+        const result = await toolParams.handler(
+            { law_id: "123", article_no: "2의2" },
+            { signals: [] }
+        );
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        expect(result.isError).toBe(true);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        expect(result.content[0]).toMatchObject({
+            type: "text",
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            text: expect.stringContaining("조문을 찾을 수 없습니다."),
+        });
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        expect(result.content[0]).toMatchObject({
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            text: expect.stringContaining(
+                "조문 2의2에 해당하는 항목이 없습니다."
+            ),
+        });
+    });
 });
 
 describe("MCP Tools - expanded law fixtures", () => {
@@ -297,7 +448,7 @@ describe("MCP Tools - expanded law fixtures", () => {
         originalFetch = global.fetch;
         originalCaches = globalWithCaches.caches;
 
-        global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+        global.fetch = vi.fn<typeof fetch>(async (input: RequestInfo | URL) => {
             const requestUrl =
                 typeof input === "string"
                     ? input
@@ -344,7 +495,7 @@ describe("MCP Tools - expanded law fixtures", () => {
                     throw new Error(`Unknown MST in fixture test: ${mst}`);
                 }
                 const serviceMockData = {
-                    Law: {
+                    법령: {
                         조문: {
                             조문단위: [
                                 {
