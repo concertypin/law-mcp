@@ -8,7 +8,7 @@ import { Hono } from "hono";
  * Don't make this file too large. If you need to add more routes, create separate route files and import them here.
  */
 export type HonoEnv = {
-    Bindings: CloudflareBindings & { AUTH_KEY: string };
+    Bindings: CloudflareBindings & { API_KEY: string };
 };
 const transport = new StreamableHTTPTransport();
 const app = new Hono<HonoEnv>()
@@ -35,15 +35,15 @@ const app = new Hono<HonoEnv>()
     })
     .all("/mcp", async (c) => {
         const userKey = c.req.header("X-Upstream-Key");
-        if (c.env.AUTH_KEY === undefined && userKey === undefined) {
+        if (c.env.API_KEY === undefined && userKey === undefined) {
             return c.text(
-                "Server misconfiguration: AUTH_KEY is not set. For testing, you can set X-Upstream-Key header to call upstream API.",
+                "Server misconfiguration: API_KEY is not set. For testing, you can set X-Upstream-Key header to call upstream API.",
                 500
             );
         }
         const mcpServer = createApp({
             ...c.env,
-            AUTH_KEY: userKey ?? c.env.AUTH_KEY,
+            API_KEY: userKey ?? c.env.API_KEY,
         });
         if (!mcpServer.isConnected()) {
             // Connect the mcp with the transport

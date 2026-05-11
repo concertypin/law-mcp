@@ -172,7 +172,7 @@ export function createApp(env: HonoEnv["Bindings"]) {
         },
         async (i) => {
             try {
-                const authKey = env.AUTH_KEY;
+                const authKey = env.API_KEY;
                 console.log(
                     "[search_laws] query:",
                     i.query,
@@ -298,7 +298,7 @@ export function createApp(env: HonoEnv["Bindings"]) {
         },
         async (i) => {
             try {
-                const authKey = env.AUTH_KEY;
+                const authKey = env.API_KEY;
                 const lawData = await fetchLawService(i.law_id, authKey);
 
                 const law_name =
@@ -372,7 +372,7 @@ export function createApp(env: HonoEnv["Bindings"]) {
         },
         async (i) => {
             try {
-                const authKey = env.AUTH_KEY;
+                const authKey = env.API_KEY;
                 const lawData = await fetchLawService(i.law_id, authKey);
                 const law_name =
                     lawData.법령.기본정보?.법령명_한글 || "법령명 알 수 없음";

@@ -23,7 +23,8 @@ const app = createApp({
 });
 
 // Mock globals safely
-const mockCacheMatch = vi.fn();
+const mockCacheMatch =
+    vi.fn<() => Promise<{ json: () => Promise<unknown> } | null>>();
 const mockCachePut = vi.fn<() => Promise<void>>();
 const mockCaches = {
     default: {

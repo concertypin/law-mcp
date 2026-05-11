@@ -1,5 +1,5 @@
 // Contains rules that are: too strict to be errors,
-// but are still worth warning about, for machine-generated ./oxlint-eslint-error.json
+// but are still worth warning about, for machine-generated ./oxlint-typescript-error.json
 
 {
     "$schema": "../../node_modules/oxlint/configuration_schema.json",
@@ -51,7 +51,6 @@
 
         // Best practice.
         "@typescript-eslint/no-shadow": "warn",
-        "no-console": "warn",
         "eqeqeq": "warn",
         "no-multi-assign": "warn",
         "no-else-return": "warn",

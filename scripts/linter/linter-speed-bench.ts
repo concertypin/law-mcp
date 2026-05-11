@@ -1,6 +1,6 @@
 /**
  * @fileoverview
- * This script benchmarks the execution time of the `pnpm lint` command, which runs ESLint on the project.
+ * This script benchmarks the execution time of the `pnpm lint` command.
  * It measures the time taken for each run, calculates the average and standard deviation, and determines when a statistically stable result is achieved based on the coefficient of variation (CV).
  * Don't have to be run on scripts or CI, but you can run it if you have lots of curiosity.
  */

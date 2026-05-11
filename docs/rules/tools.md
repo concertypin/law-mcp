@@ -17,16 +17,16 @@ It supports:
 
 But doesn't support:
 
-- Every ESLint plugin or rule.
+- Every third-party lint plugin or rule.
 - Some of HTML-superset code, which oxlint only checks its `<script>` block.
 - Little bit of rules of typescript-eslint.
-- Clean rule definition, like ESLint's `somePlugin.configs.recommended`.
+- Clean rule definition, like a plugin's `somePlugin.configs.recommended`.
 
 #### Instructions
 
 - Make a config on `scripts/linter/` directory about the plugin.
 - Write the rules you want to use in the config. Since oxlint doesn't support `.configs.recommended` or something like that, you should write the rules you want to use in the config. Maybe checking the plugin's code to find out which rules are enabled in the recommended config is helpful.
-- Modify `scripts/linter/oxlint-eslint.json` to extend the config you made.
+- Modify `scripts/linter/oxlint-typescript.json` to extend the config you made.
 
 ## Formatter Configuration
 
