@@ -124,19 +124,16 @@ async function fetchJsonWithRetry<T>(label: string, url: string): Promise<T> {
 
 export async function fetchLawSearch(
     query: string,
-    authKey: string
+    apiKey: string
 ): Promise<LawSearchResponse> {
-    const url = `https://www.law.go.kr/DRF/lawSearch.do?OC=${authKey}&target=law&type=JSON&query=${encodeURIComponent(query)}&display=10`;
-    console.log(
-        "[fetchLawSearch] URL:",
-        url.replace(authKey, "****authKey****")
-    );
+    const url = `https://www.law.go.kr/DRF/lawSearch.do?OC=${apiKey}&target=law&type=JSON&query=${encodeURIComponent(query)}&display=10`;
+    console.log("[fetchLawSearch] URL:", url.replace(apiKey, "****apiKey****"));
     return fetchJsonWithRetry<LawSearchResponse>("fetchLawSearch", url);
 }
 
 export async function fetchLawService(
     mst: string,
-    authKey: string
+    apiKey: string
 ): Promise<LawServiceResponse> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
     const cache = (caches as any).default as Cache;
@@ -147,10 +144,10 @@ export async function fetchLawService(
         return cached.json();
     }
 
-    const url = `https://www.law.go.kr/DRF/lawService.do?OC=${authKey}&target=law&type=JSON&MST=${mst}`;
+    const url = `https://www.law.go.kr/DRF/lawService.do?OC=${apiKey}&target=law&type=JSON&MST=${mst}`;
     console.log(
         "[fetchLawService] URL:",
-        url.replace(authKey, "****authKey****")
+        url.replace(apiKey, "****apiKey****")
     );
     const data = await fetchJsonWithRetry<LawServiceResponse>(
         "fetchLawService",

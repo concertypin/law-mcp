@@ -172,17 +172,19 @@ export function createApp(env: HonoEnv["Bindings"]) {
         },
         async (i) => {
             try {
-                const authKey = env.API_KEY;
+                const apiKey = env.API_KEY;
                 console.log(
                     "[search_laws] query:",
                     i.query,
-                    "authKey:",
-                    authKey ? "set" : "NOT SET"
+                    "apiKey:",
+                    apiKey ? "set" : "NOT SET"
                 );
-                const searchData = await fetchLawSearch(i.query, authKey);
+                const searchData = await fetchLawSearch(i.query, apiKey);
                 console.log(
                     "[search_laws] searchData:",
-                    JSON.stringify(searchData).slice(0, 500)
+                    JSON.stringify(searchData)
+                        .replaceAll(env.API_KEY, "****apiKey****")
+                        .slice(0, 500)
                 );
 
                 const total = Number(searchData.LawSearch.totalCnt);
@@ -200,7 +202,7 @@ export function createApp(env: HonoEnv["Bindings"]) {
                         let description: string | undefined = undefined;
 
                         try {
-                            const lawData = await fetchLawService(mst, authKey);
+                            const lawData = await fetchLawService(mst, apiKey);
                             const articles = lawData.법령.조문.조문단위;
 
                             const purposeArticle = articles.find(
@@ -298,8 +300,8 @@ export function createApp(env: HonoEnv["Bindings"]) {
         },
         async (i) => {
             try {
-                const authKey = env.API_KEY;
-                const lawData = await fetchLawService(i.law_id, authKey);
+                const apiKey = env.API_KEY;
+                const lawData = await fetchLawService(i.law_id, apiKey);
 
                 const law_name =
                     lawData.법령.기본정보?.법령명_한글 || "법령명 알 수 없음";
@@ -372,8 +374,8 @@ export function createApp(env: HonoEnv["Bindings"]) {
         },
         async (i) => {
             try {
-                const authKey = env.API_KEY;
-                const lawData = await fetchLawService(i.law_id, authKey);
+                const apiKey = env.API_KEY;
+                const lawData = await fetchLawService(i.law_id, apiKey);
                 const law_name =
                     lawData.법령.기본정보?.법령명_한글 || "법령명 알 수 없음";
 

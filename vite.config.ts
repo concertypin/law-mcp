@@ -1,7 +1,7 @@
 /// <reference types="vitest/config" />
 import { cloudflareTest } from "@cloudflare/vitest-pool-workers";
 import { cloudflare } from "@cloudflare/vite-plugin";
-import { type UserConfig, createLogger, defineConfig } from "vite";
+import { type UserConfig, defineConfig } from "vite";
 import { fileURLToPath } from "node:url";
 
 type Config = Required<UserConfig>;
@@ -12,24 +12,6 @@ const resolve: Config["resolve"] = {
     },
     external: [],
 };
-
-const custonLogger = createLogger();
-const warn = custonLogger.warn.bind(custonLogger);
-const logger = ((msg, options) => {
-    if (
-        msg.includes("Sourcemap for") &&
-        msg.includes("points to missing source")
-    )
-        return;
-    const ptn =
-        /Adding `(?:[a-zA-Z0-9_])` compatiblity flag during tests as this feature is needed to support the Vitest runner\./;
-    if (ptn.test(msg)) return;
-    warn(msg, options);
-}) satisfies typeof custonLogger.warn;
-
-custonLogger.warn = logger;
-custonLogger.info = logger;
-custonLogger.error = logger;
 
 const testConfig: Config["test"] = {
     coverage: {
@@ -44,8 +26,6 @@ const testConfig: Config["test"] = {
     globals: true,
     include: ["tests/**/*.test.ts"],
     setupFiles: "./tests/setup.ts",
-
-    silent: "passed-only",
 };
 const isVitest = typeof process.env.VITEST !== "undefined";
 export default defineConfig(() => {
@@ -65,10 +45,8 @@ export default defineConfig(() => {
             outDir: "dist",
             sourcemap: true,
         },
-
         clearScreen: false,
         resolve,
-        customLogger: custonLogger,
         test: testConfig,
     } satisfies UserConfig;
 });

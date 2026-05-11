@@ -16,10 +16,10 @@ import {
 import { createApp } from "@/route";
 import type { MockedFunction } from "vitest";
 import lawCasesRaw from "../fixtures/law-cases.md?raw";
-const authKey = "test";
+const apiKey = "test";
 
 const app = createApp({
-    AUTH_KEY: authKey,
+    API_KEY: apiKey,
 });
 
 // Mock globals safely
