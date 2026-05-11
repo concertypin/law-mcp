@@ -8,4 +8,7 @@
     "observability": {
         "enabled": true,
     },
+    "secrets": {
+        "required": ["API_KEY"],
+    },
 }
